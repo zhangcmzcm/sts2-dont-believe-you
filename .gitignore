@@ -1,0 +1,12 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# 参考资料和日志
+参考源码/
+工具文档/
+游戏log/
