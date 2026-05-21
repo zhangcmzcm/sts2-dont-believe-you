@@ -21,6 +21,8 @@ public class DontBelieveYouCard : ModCardTemplate
     private const TargetType targetType = TargetType.AnyAlly;
     private const bool shouldShowInCardLibrary = true;
 
+    public override CardMultiplayerConstraint MultiplayerConstraint => CardMultiplayerConstraint.MultiplayerOnly;
+
     // 卡图资源
     public override CardAssetProfile AssetProfile => new(
         PortraitPath: $"res://dont-believe-you/images/cards/{GetType().Name}.png"
@@ -28,7 +30,7 @@ public class DontBelieveYouCard : ModCardTemplate
 
     // 卡牌基础数值 - 能量减少量
     protected override IEnumerable<DynamicVar> CanonicalVars => [
-        ModCardVars.Int("EnergyLoss", 2)
+        new EnergyVar(2)
     ];
 
     public DontBelieveYouCard() : base(energyCost, type, rarity, targetType, shouldShowInCardLibrary)
@@ -39,7 +41,7 @@ public class DontBelieveYouCard : ModCardTemplate
     protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
         // 获取能量减少量
-        int energyLoss = DynamicVars["EnergyLoss"].IntValue;
+        int energyLoss = DynamicVars.Energy.IntValue;
 
         // 获取目标玩家（队友）
         Player? targetPlayer = cardPlay.Target?.Player;
@@ -55,6 +57,6 @@ public class DontBelieveYouCard : ModCardTemplate
     protected override void OnUpgrade()
     {
         // 升级后能量减少量从2变为3
-        DynamicVars["EnergyLoss"].UpgradeValueBy(1);
+        DynamicVars.Energy.UpgradeValueBy(1m);
     }
 }
