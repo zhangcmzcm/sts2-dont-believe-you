@@ -1,25 +1,31 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
+using STS2RitsuLib;
 using STS2RitsuLib.Cards.DynamicVars;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace DontBelieveYou.Scripts.Cards;
 
-[RegisterCard(typeof(ColorlessCardPool))]
+[RegisterCard(typeof(CurseCardPool))]
 public class DontBelieveYouCard : ModCardTemplate
 {
-    private const int energyCost = 2;
-    private const CardType type = CardType.Skill;
-    private const CardRarity rarity = CardRarity.Uncommon;
-    private const TargetType targetType = TargetType.AnyAlly;
+    private const int energyCost = -1;
+    private const CardType type = CardType.Curse;
+    private const CardRarity rarity = CardRarity.Curse;
+    private const TargetType targetType = TargetType.None;
     private const bool shouldShowInCardLibrary = true;
+
+    public override int MaxUpgradeLevel => 0;
 
     public override CardMultiplayerConstraint MultiplayerConstraint => CardMultiplayerConstraint.MultiplayerOnly;
 
@@ -33,30 +39,41 @@ public class DontBelieveYouCard : ModCardTemplate
         new EnergyVar(2)
     ];
 
+    public override IEnumerable<CardKeyword> CanonicalKeywords => [
+        CardKeyword.Unplayable,
+        // CardKeyword.Ethereal
+    ];
+
     public DontBelieveYouCard() : base(energyCost, type, rarity, targetType, shouldShowInCardLibrary)
     {
     }
 
-    // 打出时的效果逻辑 - 使队友失去费用
-    protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+    // 抽到时的效果逻辑 - 使一名随机队友失去能量
+    public override async Task AfterCardDrawn(PlayerChoiceContext choiceContext, CardModel card, bool fromHandDraw)
     {
-        // 获取能量减少量
-        int energyLoss = DynamicVars.Energy.IntValue;
-
-        // 获取目标玩家（队友）
-        Player? targetPlayer = cardPlay.Target?.Player;
-
-        // 如果目标是玩家，使其失去能量
-        if (targetPlayer != null)
+        if (card == this)
         {
-            await PlayerCmd.LoseEnergy(energyLoss, targetPlayer);
-        }
-    }
+            // 订阅回合开始事件，在能量获取之后再扣除队友能量
+            RitsuLibFramework.SubscribeLifecycleOnce<SideTurnStartedEvent>(e =>
+            {
+                try
+                {
+                    var teammates = (from c in CombatState.GetTeammatesOf(base.Owner.Creature)
+                                     where c != null && c.IsAlive && c.IsPlayer && c != base.Owner.Creature
+                                     select c.Player).ToList();
 
-    // 升级后的效果逻辑
-    protected override void OnUpgrade()
-    {
-        // 升级后能量减少量从2变为3
-        DynamicVars.Energy.UpgradeValueBy(1m);
+                    if (teammates.Count > 0)
+                    {
+                        var random = new Random();
+                        var target = teammates[random.Next(teammates.Count)];
+                        PlayerCmd.LoseEnergy(DynamicVars.Energy.IntValue, target);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Godot.GD.PrintErr($"DontBelieveYou: Error - {ex}");
+                }
+            }, false);
+        }
     }
 }

@@ -1,6 +1,6 @@
 {
     "DONT_BELIEVE_YOU_CARD_DONT_BELIEVE_YOU_CARD.title": "不相信你",
-    "DONT_BELIEVE_YOU_CARD_DONT_BELIEVE_YOU_CARD.description": "使队友失去{Energy:energyIcons()}。",
+    "DONT_BELIEVE_YOU_CARD_DONT_BELIEVE_YOU_CARD.description": "抽到时，使一名随机队友失去{Energy:energyIcons()}。",
     "DONT_BELIEVE_YOU_CARD_BELIEVE_IN_ME_CARD.title": "相信着我",
     "DONT_BELIEVE_YOU_CARD_BELIEVE_IN_ME_CARD.description": "将{IfUpgraded:show:所有|一名}队友的能量给与自己"
 }
